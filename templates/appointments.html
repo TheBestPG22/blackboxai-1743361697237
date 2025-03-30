@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIS - Appointment Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        // Sample appointment data
+        let appointments = [
+            { id: 1, patientId: 1, patientName: 'John Doe', date: '2023-11-15', time: '09:00', modality: 'X-ray', radiologist: 'Dr. Smith', status: 'Confirmed' },
+            { id: 2, patientId: 2, patientName: 'Jane Smith', date: '2023-11-15', time: '10:30', modality: 'MRI', radiologist: 'Dr. Johnson', status: 'Confirmed' },
+            { id: 3, patientId: 3, patientName: 'Robert Johnson', date: '2023-11-16', time: '14:00', modality: 'CT Scan', radiologist: 'Dr. Williams', status: 'Pending' }
+        ];
+
+        // Load appointments
+        function loadAppointments() {
+            const tbody = document.getElementById('appointmentTableBody');
+            tbody.innerHTML = '';
+            appointments.forEach(appt => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-calendar-day text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${appt.patientName}</div>
+                                <div class="text-sm text-gray-500">MRN-100${appt.patientId}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${appt.date}</div>
+                        <div class="text-sm text-gray-500">${appt.time}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${appt.modality === 'X-ray' ? 'bg-blue-100 text-blue-800' : 
+                              appt.modality === 'MRI' ? 'bg-purple-100 text-purple-800' : 
+                              'bg-green-100 text-green-800'}">
+                            ${appt.modality}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${appt.radiologist}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${appt.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${appt.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="editAppointment(${appt.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                        <button onclick="cancelAppointment(${appt.id})" class="text-red-600 hover:text-red-900">Cancel</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Add new appointment
+        function addAppointment() {
+            const form = document.getElementById('appointmentForm');
+            const newAppt = {
+                id: appointments.length + 1,
+                patientId: parseInt(form.patientId.value),
+                patientName: form.patientName.value,
+                date: form.date.value,
+                time: form.time.value,
+                modality: form.modality.value,
+                radiologist: form.radiologist.value,
+                status: 'Pending'
+            };
+            appointments.push(newAppt);
+            loadAppointments();
+            form.reset();
+            document.getElementById('addAppointmentModal').classList.add('hidden');
+            showToast('Appointment scheduled successfully!', 'success');
+        }
+
+        // Edit appointment
+        function editAppointment(id) {
+            const appt = appointments.find(a => a.id === id);
+            if (appt) {
+                const form = document.getElementById('editAppointmentForm');
+                form.id.value = appt.id;
+                form.patientId.value = appt.patientId;
+                form.patientName.value = appt.patientName;
+                form.date.value = appt.date;
+                form.time.value = appt.time;
+                form.modality.value = appt.modality;
+                form.radiologist.value = appt.radiologist;
+                form.status.value = appt.status;
+                document.getElementById('editAppointmentModal').classList.remove('hidden');
+            }
+        }
+
+        // Update appointment
+        function updateAppointment() {
+            const form = document.getElementById('editAppointmentForm');
+            const id = parseInt(form.id.value);
+            const index = appointments.findIndex(a => a.id === id);
+            if (index !== -1) {
+                appointments[index] = {
+                    ...appointments[index],
+                    patientId: parseInt(form.patientId.value),
+                    patientName: form.patientName.value,
+                    date: form.date.value,
+                    time: form.time.value,
+                    modality: form.modality.value,
+                    radiologist: form.radiologist.value,
+                    status: form.status.value
+                };
+                loadAppointments();
+                document.getElementById('editAppointmentModal').classList.add('hidden');
+                showToast('Appointment updated successfully!', 'success');
+            }
+        }
+
+        // Cancel appointment
+        function cancelAppointment(id) {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                appointments = appointments.filter(a => a.id !== id);
+                loadAppointments();
+                showToast('Appointment cancelled successfully!', 'success');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', loadAppointments);
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Sidebar (same as dashboard) -->
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-800 text-white p-4">
+            <div class="flex items-center space-x-2 mb-8 p-2">
+                <i class="fas fa-x-ray text-2xl"></i>
+                <h1 class="text-xl font-bold">Radiology RIS</h1>
+            </div>
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="appointments.html" class="flex items-center space-x-2 p-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="orders.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Imaging Orders</span>
+                </a>
+                <a href="imaging.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-image"></i>
+                    <span>Image Processing</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-file-medical"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="admin.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Appointment Scheduler</h2>
+                <button onclick="document.getElementById('addAppointmentModal').classList.remove('hidden')" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                    <i class="fas fa-plus mr-2"></i> New Appointment
+                </button>
+            </div>
+
+            <!-- Calendar View -->
+            <div class="mb-8 bg-white p-4 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">November 2023</h3>
+                    <div class="flex space-x-2">
+                        <button class="p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Today
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 mb-2">
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Sun</div>
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Mon</div>
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Tue</div>
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Wed</div>
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Thu</div>
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Fri</div>
+                    <div class="text-center text-sm font-medium text-gray-500 py-2">Sat</div>
+                </div>
+                <div class="grid grid-cols-7 gap-1">
+                    <!-- Calendar days would be generated here in a real implementation -->
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">29</div>
+                    </div>
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">30</div>
+                    </div>
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">31</div>
+                    </div>
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">1</div>
+                    </div>
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">2</div>
+                    </div>
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">3</div>
+                    </div>
+                    <div class="h-24 p-1 border border-gray-200">
+                        <div class="text-right text-sm">4</div>
+                    </div>
+                    <!-- More days would follow -->
+                </div>
+            </div>
+
+            <!-- Appointment Table -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modality</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Radiologist</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Appointment data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Appointment Modal -->
+    <div id="addAppointmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Schedule New Appointment</h3>
+                <form id="appointmentForm" onsubmit="event.preventDefault(); addAppointment();">
+                    <div class="mb-4">
+                        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+                        <input type="number" id="patientId" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="patientName" class="block text-sm font-medium text-gray-700">Patient Name</label>
+                        <input type="text" id="patientName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="time" class="block text-sm font-medium text-gray-700">Time</label>
+                        <input type="time" id="time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="modality" class="block text-sm font-medium text-gray-700">Imaging Modality</label>
+                        <select id="modality" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select</option>
+                            <option value="X-ray">X-ray</option>
+                            <option value="MRI">MRI</option>
+                            <option value="CT Scan">CT Scan</option>
+                            <option value="Ultrasound">Ultrasound</option>
+                            <option value="Mammography">Mammography</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="radiologist" class="block text-sm font-medium text-gray-700">Radiologist</label>
+                        <select id="radiologist" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select</option>
+                            <option value="Dr. Smith">Dr. Smith</option>
+                            <option value="Dr. Johnson">Dr. Johnson</option>
+                            <option value="Dr. Williams">Dr. Williams</option>
+                            <option value="Dr. Brown">Dr. Brown</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('addAppointmentModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Schedule
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Appointment Modal -->
+    <div id="editAppointmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Appointment</h3>
+                <form id="editAppointmentForm" onsubmit="event.preventDefault(); updateAppointment();">
+                    <input type="hidden" id="id">
+                    <div class="mb-4">
+                        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+                        <input type="number" id="patientId" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="patientName" class="block text-sm font-medium text-gray-700">Patient Name</label>
+                        <input type="text" id="patientName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="time" class="block text-sm font-medium text-gray-700">Time</label>
+                        <input type="time" id="time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="modality" class="block text-sm font-medium text-gray-700">Imaging Modality</label>
+                        <select id="modality" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select</option>
+                            <option value="X-ray">X-ray</option>
+                            <option value="MRI">MRI</option>
+                            <option value="CT Scan">CT Scan</option>
+                            <option value="Ultrasound">Ultrasound</option>
+                            <option value="Mammography">Mammography</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="radiologist" class="block text-sm font-medium text-gray-700">Radiologist</label>
+                        <select id="radiologist" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select</option>
+                            <option value="Dr. Smith">Dr. Smith</option>
+                            <option value="Dr. Johnson">Dr. Johnson</option>
+                            <option value="Dr. Williams">Dr. Williams</option>
+                            <option value="Dr. Brown">Dr. Brown</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Pending">Pending</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Cancelled">Cancelled</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('editAppointmentModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 px-4 py-2 rounded-md text-white"></div>
+</body>
+</html>

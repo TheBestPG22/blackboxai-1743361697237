@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIS - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        // Sample user data
+        let users = [
+            { id: 1, username: 'admin', name: 'System Administrator', email: 'admin@radiology.org', 
+              role: 'Admin', status: 'Active', lastLogin: '2023-11-15 08:42' },
+            { id: 2, username: 'radiologist1', name: 'Dr. Smith', email: 'smith@radiology.org', 
+              role: 'Radiologist', status: 'Active', lastLogin: '2023-11-15 09:15' },
+            { id: 3, username: 'technician1', name: 'John Doe', email: 'jdoe@radiology.org', 
+              role: 'Technician', status: 'Inactive', lastLogin: '2023-11-10 14:30' }
+        ];
+
+        // Load users
+        function loadUsers() {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-user text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.username}</div>
+                                <div class="text-sm text-gray-500">${user.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 
+                              user.role === 'Radiologist' ? 'bg-blue-100 text-blue-800' : 
+                              'bg-gray-100 text-gray-800'}">
+                            ${user.role}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${user.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.lastLogin}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                        <button onclick="toggleUserStatus(${user.id})" class="${user.status === 'Active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}">
+                            ${user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Add new user
+        function addUser() {
+            const form = document.getElementById('userForm');
+            const newUser = {
+                id: users.length + 1,
+                username: form.username.value,
+                name: form.name.value,
+                email: form.email.value,
+                role: form.role.value,
+                status: 'Active',
+                lastLogin: new Date().toISOString().split('T')[0] + ' ' + 
+                           new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+            users.push(newUser);
+            loadUsers();
+            form.reset();
+            document.getElementById('addUserModal').classList.add('hidden');
+            showToast('User added successfully!', 'success');
+        }
+
+        // Edit user
+        function editUser(id) {
+            const user = users.find(u => u.id === id);
+            if (user) {
+                const form = document.getElementById('editUserForm');
+                form.id.value = user.id;
+                form.username.value = user.username;
+                form.name.value = user.name;
+                form.email.value = user.email;
+                form.role.value = user.role;
+                document.getElementById('editUserModal').classList.remove('hidden');
+            }
+        }
+
+        // Update user
+        function updateUser() {
+            const form = document.getElementById('editUserForm');
+            const id = parseInt(form.id.value);
+            const index = users.findIndex(u => u.id === id);
+            if (index !== -1) {
+                users[index] = {
+                    ...users[index],
+                    username: form.username.value,
+                    name: form.name.value,
+                    email: form.email.value,
+                    role: form.role.value
+                };
+                loadUsers();
+                document.getElementById('editUserModal').classList.add('hidden');
+                showToast('User updated successfully!', 'success');
+            }
+        }
+
+        // Toggle user status
+        function toggleUserStatus(id) {
+            const index = users.findIndex(u => u.id === id);
+            if (index !== -1) {
+                users[index].status = users[index].status === 'Active' ? 'Inactive' : 'Active';
+                loadUsers();
+                showToast(`User ${users[index].status === 'Active' ? 'activated' : 'deactivated'}!`, 'success');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Sidebar (same as dashboard) -->
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-800 text-white p-4">
+            <div class="flex items-center space-x-2 mb-8 p-2">
+                <i class="fas fa-x-ray text-2xl"></i>
+                <h1 class="text-xl font-bold">Radiology RIS</h1>
+            </div>
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="appointments.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="orders.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Imaging Orders</span>
+                </a>
+                <a href="imaging.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-image"></i>
+                    <span>Image Processing</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-file-medical"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="admin.html" class="flex items-center space-x-2 p-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
+                <button onclick="document.getElementById('addUserModal').classList.remove('hidden')" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Add User
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8">
+                    <a href="#" class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        User Management
+                    </a>
+                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        System Settings
+                    </a>
+                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Audit Logs
+                    </a>
+                </nav>
+            </div>
+
+            <!-- User Table -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- User data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- System Stats -->
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                            <i class="fas fa-users text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Total Users</p>
+                            <h3 class="text-2xl font-bold">${users.length}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                            <i class="fas fa-user-check text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Active Users</p>
+                            <h3 class="text-2xl font-bold">${users.filter(u => u.status === 'Active').length}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                            <i class="fas fa-user-md text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Radiologists</p>
+                            <h3 class="text-2xl font-bold">${users.filter(u => u.role === 'Radiologist').length}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Add New User</h3>
+                <form id="userForm" onsubmit="event.preventDefault(); addUser();">
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" id="username" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                        <select id="role" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Admin">Admin</option>
+                            <option value="Radiologist">Radiologist</option>
+                            <option value="Technician">Technician</option>
+                            <option value="Receptionist">Receptionist</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('addUserModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Add User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Edit User</h3>
+                <form id="editUserForm" onsubmit="event.preventDefault(); updateUser();">
+                    <input type="hidden" id="id">
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" id="username" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                        <select id="role" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Admin">Admin</option>
+                            <option value="Radiologist">Radiologist</option>
+                            <option value="Technician">Technician</option>
+                            <option value="Receptionist">Receptionist</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('editUserModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Update User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 px-4 py-2 rounded-md text-white"></div>
+</body>
+</html>

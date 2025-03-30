@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIS - Imaging Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        // Sample order data
+        let orders = [
+            { id: 1, orderId: 'ORD-1001', patientId: 1, patientName: 'John Doe', modality: 'X-ray', 
+              bodyPart: 'Chest', priority: 'Routine', status: 'Pending', orderedBy: 'Dr. Smith', orderedDate: '2023-11-10' },
+            { id: 2, orderId: 'ORD-1002', patientId: 2, patientName: 'Jane Smith', modality: 'MRI', 
+              bodyPart: 'Brain', priority: 'Urgent', status: 'In Progress', orderedBy: 'Dr. Johnson', orderedDate: '2023-11-11' },
+            { id: 3, orderId: 'ORD-1003', patientId: 3, patientName: 'Robert Johnson', modality: 'CT Scan', 
+              bodyPart: 'Abdomen', priority: 'Stat', status: 'Completed', orderedBy: 'Dr. Williams', orderedDate: '2023-11-12' }
+        ];
+
+        // Load orders into table
+        function loadOrders() {
+            const tbody = document.getElementById('orderTableBody');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-clipboard-list text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${order.orderId}</div>
+                                <div class="text-sm text-gray-500">${order.patientName}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${order.modality === 'X-ray' ? 'bg-blue-100 text-blue-800' : 
+                              order.modality === 'MRI' ? 'bg-purple-100 text-purple-800' : 
+                              'bg-green-100 text-green-800'}">
+                            ${order.modality}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.bodyPart}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${order.priority === 'Routine' ? 'bg-gray-100 text-gray-800' : 
+                              order.priority === 'Urgent' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-red-100 text-red-800'}">
+                            ${order.priority}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
+                              order.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 
+                              'bg-green-100 text-green-800'}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.orderedBy}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.orderedDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="editOrder(${order.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                        <button onclick="completeOrder(${order.id})" class="text-green-600 hover:text-green-900">Complete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Add new order
+        function addOrder() {
+            const form = document.getElementById('orderForm');
+            const newOrder = {
+                id: orders.length + 1,
+                orderId: `ORD-${1000 + orders.length + 1}`,
+                patientId: parseInt(form.patientId.value),
+                patientName: form.patientName.value,
+                modality: form.modality.value,
+                bodyPart: form.bodyPart.value,
+                priority: form.priority.value,
+                status: 'Pending',
+                orderedBy: form.orderedBy.value,
+                orderedDate: new Date().toISOString().split('T')[0]
+            };
+            orders.push(newOrder);
+            loadOrders();
+            form.reset();
+            document.getElementById('addOrderModal').classList.add('hidden');
+            showToast('Order created successfully!', 'success');
+        }
+
+        // Edit order
+        function editOrder(id) {
+            const order = orders.find(o => o.id === id);
+            if (order) {
+                const form = document.getElementById('editOrderForm');
+                form.id.value = order.id;
+                form.patientId.value = order.patientId;
+                form.patientName.value = order.patientName;
+                form.modality.value = order.modality;
+                form.bodyPart.value = order.bodyPart;
+                form.priority.value = order.priority;
+                form.status.value = order.status;
+                document.getElementById('editOrderModal').classList.remove('hidden');
+            }
+        }
+
+        // Update order
+        function updateOrder() {
+            const form = document.getElementById('editOrderForm');
+            const id = parseInt(form.id.value);
+            const index = orders.findIndex(o => o.id === id);
+            if (index !== -1) {
+                orders[index] = {
+                    ...orders[index],
+                    patientId: parseInt(form.patientId.value),
+                    patientName: form.patientName.value,
+                    modality: form.modality.value,
+                    bodyPart: form.bodyPart.value,
+                    priority: form.priority.value,
+                    status: form.status.value
+                };
+                loadOrders();
+                document.getElementById('editOrderModal').classList.add('hidden');
+                showToast('Order updated successfully!', 'success');
+            }
+        }
+
+        // Complete order
+        function completeOrder(id) {
+            const index = orders.findIndex(o => o.id === id);
+            if (index !== -1) {
+                orders[index].status = 'Completed';
+                loadOrders();
+                showToast('Order marked as completed!', 'success');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Sidebar (same as dashboard) -->
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-800 text-white p-4">
+            <div class="flex items-center space-x-2 mb-8 p-2">
+                <i class="fas fa-x-ray text-2xl"></i>
+                <h1 class="text-xl font-bold">Radiology RIS</h1>
+            </div>
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="appointments.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="orders.html" class="flex items-center space-x-2 p-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Imaging Orders</span>
+                </a>
+                <a href="imaging.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-image"></i>
+                    <span>Image Processing</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-file-medical"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="admin.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Imaging Orders</h2>
+                <div class="flex space-x-3">
+                    <select class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option>All Modalities</option>
+                        <option>X-ray</option>
+                        <option>MRI</option>
+                        <option>CT Scan</option>
+                    </select>
+                    <select class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option>All Statuses</option>
+                        <option>Pending</option>
+                        <option>In Progress</option>
+                        <option>Completed</option>
+                    </select>
+                    <button onclick="document.getElementById('addOrderModal').classList.remove('hidden')" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-plus mr-2"></i> New Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Order Table -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order/Patient</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modality</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Body Part</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ordered By</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Order data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Order Modal -->
+    <div id="addOrderModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Imaging Order</h3>
+                <form id="orderForm" onsubmit="event.preventDefault(); addOrder();">
+                    <div class="mb-4">
+                        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+                        <input type="number" id="patientId" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="patientName" class="block text-sm font-medium text-gray-700">Patient Name</label>
+                        <input type="text" id="patientName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="modality" class="block text-sm font-medium text-gray-700">Imaging Modality</label>
+                        <select id="modality" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select</option>
+                            <option value="X-ray">X-ray</option>
+                            <option value="MRI">MRI</option>
+                            <option value="CT Scan">CT Scan</option>
+                            <option value="Ultrasound">Ultrasound</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="bodyPart" class="block text-sm font-medium text-gray-700">Body Part</label>
+                        <input type="text" id="bodyPart" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                        <select id="priority" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Routine">Routine</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="Stat">Stat</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="orderedBy" class="block text-sm font-medium text-gray-700">Ordered By</label>
+                        <select id="orderedBy" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Dr. Smith">Dr. Smith</option>
+                            <option value="Dr. Johnson">Dr. Johnson</option>
+                            <option value="Dr. Williams">Dr. Williams</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('addOrderModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Create Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Order Modal -->
+    <div id="editOrderModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Imaging Order</h3>
+                <form id="editOrderForm" onsubmit="event.preventDefault(); updateOrder();">
+                    <input type="hidden" id="id">
+                    <div class="mb-4">
+                        <label for="patientId" class="block text-sm font-medium text-gray-700">Patient ID</label>
+                        <input type="number" id="patientId" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="patientName" class="block text-sm font-medium text-gray-700">Patient Name</label>
+                        <input type="text" id="patientName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="modality" class="block text-sm font-medium text-gray-700">Imaging Modality</label>
+                        <select id="modality" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select</option>
+                            <option value="X-ray">X-ray</option>
+                            <option value="MRI">MRI</option>
+                            <option value="CT Scan">CT Scan</option>
+                            <option value="Ultrasound">Ultrasound</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="bodyPart" class="block text-sm font-medium text-gray-700">Body Part</label>
+                        <input type="text" id="bodyPart" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                        <select id="priority" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Routine">Routine</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="Stat">Stat</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('editOrderModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Update Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 px-4 py-2 rounded-md text-white"></div>
+</body>
+</html>

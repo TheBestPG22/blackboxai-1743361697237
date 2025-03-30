@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIS - Report Generation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Sample report data
+        let reports = [
+            { id: 1, reportId: 'RPT-1001', patientId: 1, patientName: 'John Doe', 
+              modality: 'X-ray', date: '2023-11-15', status: 'Finalized', radiologist: 'Dr. Smith' },
+            { id: 2, reportId: 'RPT-1002', patientId: 2, patientName: 'Jane Smith', 
+              modality: 'MRI', date: '2023-11-16', status: 'Draft', radiologist: 'Dr. Johnson' },
+            { id: 3, reportId: 'RPT-1003', patientId: 3, patientName: 'Robert Johnson', 
+              modality: 'CT Scan', date: '2023-11-17', status: 'Finalized', radiologist: 'Dr. Williams' }
+        ];
+
+        // Load reports
+        function loadReports() {
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+            reports.forEach(report => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="fas fa-file-medical text-blue-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${report.reportId}</div>
+                                <div class="text-sm text-gray-500">${report.patientName}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${report.modality}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${report.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${report.status === 'Finalized' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                            ${report.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${report.radiologist}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="viewReport(${report.id})" class="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                        <button onclick="generatePDF(${report.id})" class="text-green-600 hover:text-green-900 mr-3">PDF</button>
+                        <button onclick="deleteReport(${report.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // View report
+        function viewReport(id) {
+            const report = reports.find(r => r.id === id);
+            if (report) {
+                document.getElementById('reportViewModal').classList.remove('hidden');
+                document.getElementById('reportContent').innerHTML = `
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Radiology Report</h3>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Report ID</p>
+                                <p class="font-medium">${report.reportId}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Date</p>
+                                <p class="font-medium">${report.date}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Patient Name</p>
+                                <p class="font-medium">${report.patientName}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Patient ID</p>
+                                <p class="font-medium">MRN-100${report.patientId}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Modality</p>
+                                <p class="font-medium">${report.modality}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Radiologist</p>
+                                <p class="font-medium">${report.radiologist}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="text-md font-medium text-gray-900 mb-2">Clinical History</h4>
+                        <p class="text-gray-700">${getSampleClinicalHistory(report.patientName)}</p>
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="text-md font-medium text-gray-900 mb-2">Findings</h4>
+                        <p class="text-gray-700">${getSampleFindings(report.modality)}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-2">Impression</h4>
+                        <p class="text-gray-700">${getSampleImpression(report.modality)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Generate PDF
+        function generatePDF(id) {
+            const report = reports.find(r => r.id === id);
+            if (report) {
+                // In a real implementation, this would use jsPDF to generate a PDF
+                showToast('PDF generated successfully!', 'success');
+                // Mock download
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = '#'; // Would be the PDF URL in real implementation
+                    link.download = `${report.reportId}_${report.patientName}.pdf`;
+                    link.click();
+                }, 1000);
+            }
+        }
+
+        // Delete report
+        function deleteReport(id) {
+            if (confirm('Are you sure you want to delete this report?')) {
+                reports = reports.filter(r => r.id !== id);
+                loadReports();
+                showToast('Report deleted successfully!', 'success');
+            }
+        }
+
+        // Sample report content generators
+        function getSampleClinicalHistory(patientName) {
+            return `${patientName} presented with persistent cough and fever for 2 weeks. No significant past medical history.`;
+        }
+
+        function getSampleFindings(modality) {
+            if (modality === 'X-ray') {
+                return `The lungs are clear with no evidence of consolidation or pleural effusion. The cardiomediastinal silhouette is normal. No pneumothorax is identified. The imaged osseous structures are unremarkable.`;
+            } else if (modality === 'MRI') {
+                return `There is a 1.2 cm rounded focus of increased T2 signal in the left frontal lobe with minimal surrounding edema. No mass effect or midline shift. The ventricles and sulci are normal in size and configuration. The posterior fossa structures are unremarkable.`;
+            } else {
+                return `The liver demonstrates normal size and echotexture. No focal lesions identified. The gallbladder is distended without stones or wall thickening. The pancreas and spleen are unremarkable. No free fluid is seen.`;
+            }
+        }
+
+        function getSampleImpression(modality) {
+            if (modality === 'X-ray') {
+                return `1. No acute cardiopulmonary abnormality.
+2. Clinical correlation recommended if symptoms persist.`;
+            } else if (modality === 'MRI') {
+                return `1. Small focus of increased T2 signal in the left frontal lobe, most consistent with a small focus of gliosis or nonspecific white matter change.
+2. No acute intracranial abnormality.`;
+            } else {
+                return `1. Normal abdominal CT scan.
+2. No evidence of acute abdominal pathology.`;
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', loadReports);
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Sidebar (same as dashboard) -->
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-800 text-white p-4">
+            <div class="flex items-center space-x-2 mb-8 p-2">
+                <i class="fas fa-x-ray text-2xl"></i>
+                <h1 class="text-xl font-bold">Radiology RIS</h1>
+            </div>
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="appointments.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="orders.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Imaging Orders</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-2 p-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-file-medical"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="imaging.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-image"></i>
+                    <span>Image Processing</span>
+                </a>
+                <a href="admin.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Report Generation</h2>
+                <div class="flex space-x-3">
+                    <select class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option>All Modalities</option>
+                        <option>X-ray</option>
+                        <option>MRI</option>
+                        <option>CT Scan</option>
+                    </select>
+                    <select class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option>All Statuses</option>
+                        <option>Draft</option>
+                        <option>Finalized</option>
+                    </select>
+                    <button onclick="document.getElementById('newReportModal').classList.remove('hidden')" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-plus mr-2"></i> New Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Table -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report/Patient</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modality</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Radiologist</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Report data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Report Modal -->
+    <div id="newReportModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Report</h3>
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Patient</label>
+                            <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option>Select Patient</option>
+                                <option>John Doe (MRN-1001)</option>
+                                <option>Jane Smith (MRN-1002)</option>
+                                <option>Robert Johnson (MRN-1003)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Modality</label>
+                            <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option>X-ray</option>
+                                <option>MRI</option>
+                                <option>CT Scan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Study Date</label>
+                            <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Radiologist</label>
+                            <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option>Dr. Smith</option>
+                                <option>Dr. Johnson</option>
+                                <option>Dr. Williams</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Clinical History</label>
+                        <textarea rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Findings</label>
+                        <textarea rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Impression</label>
+                        <textarea rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="document.getElementById('newReportModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Save as Draft
+                        </button>
+                        <button type="button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                            Finalize Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report View Modal -->
+    <div id="reportViewModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Report Viewer</h3>
+                    <button onclick="document.getElementById('reportViewModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="reportContent" class="bg-gray-50 p-6 rounded-lg">
+                    <!-- Report content will be loaded here -->
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('reportViewModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Close
+                    </button>
+                    <button type="button" onclick="generatePDF(1)" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 px-4 py-2 rounded-md text-white"></div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIS - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Sidebar -->
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-800 text-white p-4">
+            <div class="flex items-center space-x-2 mb-8 p-2">
+                <i class="fas fa-x-ray text-2xl"></i>
+                <h1 class="text-xl font-bold">Radiology RIS</h1>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-2 p-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="appointments.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="orders.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Imaging Orders</span>
+                </a>
+                <a href="imaging.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-image"></i>
+                    <span>Image Processing</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-file-medical"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="admin.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600">Welcome, Dr. Smith</span>
+                    <button class="p-2 rounded-full bg-gray-200 hover:bg-gray-300">
+                        <i class="fas fa-sign-out-alt text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500">Total Patients</p>
+                            <h3 class="text-3xl font-bold">142</h3>
+                        </div>
+                        <i class="fas fa-user-injured text-blue-500 text-4xl"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500">Today's Appointments</p>
+                            <h3 class="text-3xl font-bold">8</h3>
+                        </div>
+                        <i class="fas fa-calendar-check text-green-500 text-4xl"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500">Pending Reports</p>
+                            <h3 class="text-3xl font-bold">3</h3>
+                        </div>
+                        <i class="fas fa-file-medical text-yellow-500 text-4xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="p-2 bg-blue-100 rounded-full">
+                            <i class="fas fa-user-plus text-blue-500"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">New patient registered</p>
+                            <p class="text-sm text-gray-500">John Doe - 10 minutes ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="p-2 bg-green-100 rounded-full">
+                            <i class="fas fa-x-ray text-green-500"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">CT Scan completed</p>
+                            <p class="text-sm text-gray-500">Patient #MRN-4578 - 1 hour ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="p-2 bg-yellow-100 rounded-full">
+                            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">Report pending approval</p>
+                            <p class="text-sm text-gray-500">Case #RPT-2023 - 2 hours ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

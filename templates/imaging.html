@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIS - Image Processing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- DICOM Viewer Library -->
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.6.0/dist/cornerstone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.1.0/dist/cornerstoneWADOImageLoader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dicom-parser@1.8.7/dist/dicomParser.min.js"></script>
+    <style>
+        #dicomViewer {
+            width: 100%;
+            height: 500px;
+            background-color: black;
+        }
+        .tool-button {
+            @apply p-2 bg-gray-200 rounded-md hover:bg-gray-300;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Sidebar -->
+    <div class="flex h-screen">
+        <div class="w-64 bg-blue-800 text-white p-4">
+            <div class="flex items-center space-x-2 mb-8 p-2">
+                <i class="fas fa-x-ray text-2xl"></i>
+                <h1 class="text-xl font-bold">Radiology RIS</h1>
+            </div>
+            <nav class="space-y-2">
+                <a href="dashboard.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="patients.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="appointments.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="orders.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Imaging Orders</span>
+                </a>
+                <a href="imaging.html" class="flex items-center space-x-2 p-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-image"></i>
+                    <span>Image Processing</span>
+                </a>
+                <a href="reports.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-file-medical"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="admin.html" class="flex items-center space-x-2 p-2 hover:bg-blue-700 rounded-lg">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8 overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Image Processing</h2>
+                <div class="flex space-x-4 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                        <select id="patientSelect" class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select a patient</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Study</label>
+                        <select id="studySelect" class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" disabled>
+                            <option value="">Select a study</option>
+                        </select>
+                    </div>
+                    <button id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md h-[42px] mt-auto">
+                        <i class="fas fa-upload mr-2"></i>Upload DICOM
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- DICOM Viewer -->
+                <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">DICOM Viewer</h3>
+                        <div class="flex space-x-2">
+                            <button id="zoomInBtn" class="tool-button" title="Zoom In">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button id="zoomOutBtn" class="tool-button" title="Zoom Out">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button id="panBtn" class="tool-button" title="Pan">
+                                <i class="fas fa-arrows-alt"></i>
+                            </button>
+                            <button id="wwWlBtn" class="tool-button" title="Adjust Contrast">
+                                <i class="fas fa-sliders-h"></i>
+                            </button>
+                            <button id="resetBtn" class="tool-button" title="Reset View">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="dicomViewer"></div>
+                    <div class="mt-4 flex justify-between">
+                        <div>
+                            <span id="imageInfo" class="text-sm text-gray-600">No image loaded</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="prevImageBtn" class="tool-button" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span id="imageCounter" class="px-2 py-1 text-sm">0/0</span>
+                            <button id="nextImageBtn" class="tool-button" disabled>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Processing Panel -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4">AI Processing</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">AI Model</label>
+                            <select id="aiModelSelect" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="lung_nodule">Lung Nodule Detection</option>
+                                <option value="brain_bleed">Brain Hemorrhage Detection</option>
+                                <option value="fracture">Fracture Detection</option>
+                                <option value="pneumonia">Pneumonia Detection</option>
+                            </select>
+                        </div>
+                        <button id="runAiBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md flex items-center justify-center">
+                            <i class="fas fa-brain mr-2"></i> Run AI Analysis
+                        </button>
+                        <div id="aiResults" class="hidden">
+                            <h4 class="font-medium text-gray-900 mb-2">Analysis Results</h4>
+                            <div id="aiFindings" class="bg-gray-50 p-3 rounded-md text-sm mb-3">
+                                No results available
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-blue-50 p-2 rounded-md">
+                                    <p class="text-xs text-blue-600">Confidence</p>
+                                    <p id="confidenceScore" class="font-medium">0%</p>
+                                </div>
+                                <div class="bg-purple-50 p-2 rounded-md">
+                                    <p class="text-xs text-purple-600">Processing Time</p>
+                                    <p id="processingTime" class="font-medium">0ms</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Annotations -->
+                    <div class="mt-6">
+                        <h4 class="font-medium text-gray-900 mb-2">Annotations</h4>
+                        <div class="space-y-2">
+                            <button id="addAnnotationBtn" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-1 px-3 rounded-md text-sm flex items-center">
+                                <i class="fas fa-plus-circle mr-2"></i> Add Annotation
+                            </button>
+                            <div id="annotationsList" class="space-y-1">
+                                <!-- Annotations will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient/Study Info -->
+            <div class="mt-6 bg-white p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-3">Study Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Patient Name</p>
+                        <p id="patientName" class="font-medium">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">MRN</p>
+                        <p id="patientMrn" class="font-medium">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Study Date</p>
+                        <p id="studyDate" class="font-medium">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Modality</p>
+                        <p id="studyModality" class="font-medium">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Body Part</p>
+                        <p id="studyBodyPart" class="font-medium">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Status</p>
+                        <p id="studyStatus" class="font-medium">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize DICOM viewer
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load patients on page load
+            try {
+                const response = await fetch('/api/patients');
+                const patients = await response.json();
+                const patientSelect = document.getElementById('patientSelect');
+                
+                patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = `${patient.first_name} ${patient.last_name} (${patient.mrn})`;
+                    patientSelect.appendChild(option);
+                });
+
+                // When patient is selected, load their studies
+                patientSelect.addEventListener('change', function() {
+                    const studySelect = document.getElementById('studySelect');
+                    studySelect.disabled = !this.value;
+                    
+                    if (this.value) {
+                        loadPatientStudies(this.value);
+                    } else {
+                        studySelect.innerHTML = '<option value="">Select a study</option>';
+                    }
+                });
+
+                // When study is selected, load its images
+                document.getElementById('studySelect').addEventListener('change', function() {
+                    if (this.value) {
+                        loadStudyImages(this.value);
+                    }
+                });
+
+                // Handle DICOM upload
+                document.getElementById('uploadBtn').addEventListener('click', function() {
+                    // Implementation would open file dialog and handle upload
+                    alert('DICOM upload functionality would be implemented here');
+                });
+            } catch (error) {
+                console.error('Error initializing page:', error);
+            }
+            // Initialize Cornerstone with Flask backend integration
+            cornerstone.init();
+            cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+            cornerstoneWADOImageLoader.webWorkerManager.initialize({
+                webWorkerPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.1.0/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
+                taskConfiguration: {
+                    'decodeTask': {
+                        codecsPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.1.0/dist/cornerstoneWADOImageLoaderCodecs.min.js'
+                    }
+                }
+            });
+
+            // Setup viewer element
+            const element = document.getElementById('dicomViewer');
+            cornerstone.enable(element);
+            
+            // Load studies for selected patient
+            async function loadPatientStudies(patientId) {
+                try {
+                    const response = await fetch(`/api/patients/${patientId}/studies`);
+                    const studies = await response.json();
+                    const studySelect = document.getElementById('studySelect');
+                    studySelect.innerHTML = '';
+                    
+                    studies.forEach(study => {
+                        const option = document.createElement('option');
+                        option.value = study.id;
+                        option.textContent = `${study.modality} - ${study.body_part} (${new Date(study.study_date).toLocaleDateString()})`;
+                        studySelect.appendChild(option);
+                    });
+                    
+                    if (studies.length > 0) {
+                        loadStudyImages(studies[0].id);
+                    }
+                } catch (error) {
+                    console.error('Error loading studies:', error);
+                }
+            }
+
+            // Load images for selected study
+            async function loadStudyImages(studyId) {
+                try {
+                    const response = await fetch(`/api/studies/${studyId}/images`);
+                    const images = await response.json();
+                    displayImages(images);
+                } catch (error) {
+                    console.error('Error loading images:', error);
+                }
+            }
+
+            // Tool button event handlers
+            document.getElementById('zoomInBtn').addEventListener('click', function() {
+                cornerstone.getViewport(element).scale += 0.5;
+                cornerstone.setViewport(element, cornerstone.getViewport(element));
+            });
+
+            document.getElementById('zoomOutBtn').addEventListener('click', function() {
+                const viewport = cornerstone.getViewport(element);
+                viewport.scale = Math.max(0.5, viewport.scale - 0.5);
+                cornerstone.setViewport(element, viewport);
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                cornerstone.reset(element);
+            });
+
+            // Load sample image
+            document.getElementById('loadSampleBtn').addEventListener('click', function() {
+                // In a real implementation, this would load actual DICOM files
+                // For demo purposes, we'll simulate loading an image
+                loadSampleImage();
+            });
+
+            // AI Processing
+            document.getElementById('runAiBtn').addEventListener('click', function() {
+                runAiAnalysis();
+            });
+
+            // Sample data for demonstration
+            const sampleStudies = [
+                {
+                    patientName: "John Doe",
+                    mrn: "MRN-1001",
+                    studyDate: "2023-11-15",
+                    modality: "CT",
+                    bodyPart: "Chest",
+                    status: "Completed",
+                    images: 12
+                }
+            ];
+
+            function loadSampleImage() {
+                // Simulate loading a study
+                const study = sampleStudies[0];
+                document.getElementById('patientName').textContent = study.patientName;
+                document.getElementById('patientMrn').textContent = study.mrn;
+                document.getElementById('studyDate').textContent = study.studyDate;
+                document.getElementById('studyModality').textContent = study.modality;
+                document.getElementById('studyBodyPart').textContent = study.bodyPart;
+                document.getElementById('studyStatus').textContent = study.status;
+                document.getElementById('imageCounter').textContent = `1/${study.images}`;
+                document.getElementById('imageInfo').textContent = `${study.modality} ${study.bodyPart}`;
+                
+                // Enable navigation buttons
+                document.getElementById('prevImageBtn').disabled = false;
+                document.getElementById('nextImageBtn').disabled = false;
+                
+                // Show success message
+                showToast('Sample image loaded successfully', 'success');
+            }
+
+            function runAiAnalysis() {
+                const model = document.getElementById('aiModelSelect').value;
+                const btn = document.getElementById('runAiBtn');
+                const originalText = btn.innerHTML;
+                
+                // Show loading state
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+                btn.disabled = true;
+                
+                // Simulate AI processing delay
+                setTimeout(() => {
+                    // Mock results based on selected model
+                    let findings, confidence;
+                    switch(model) {
+                        case 'lung_nodule':
+                            findings = "Detected 2 pulmonary nodules (3mm and 5mm). No concerning features identified.";
+                            confidence = "92%";
+                            break;
+                        case 'brain_bleed':
+                            findings = "No evidence of intracranial hemorrhage detected.";
+                            confidence = "98%";
+                            break;
+                        case 'fracture':
+                            findings = "Possible nondisplaced fracture detected in the right 4th rib. Clinical correlation recommended.";
+                            confidence = "87%";
+                            break;
+                        case 'pneumonia':
+                            findings = "Bilateral ground-glass opacities detected, consistent with possible pneumonia.";
+                            confidence = "89%";
+                            break;
+                    }
+                    
+                    // Display results
+                    document.getElementById('aiFindings').textContent = findings;
+                    document.getElementById('confidenceScore').textContent = confidence;
+                    document.getElementById('processingTime').textContent = "1250ms";
+                    document.getElementById('aiResults').classList.remove('hidden');
+                    
+                    // Reset button
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    
+                    showToast('AI analysis completed', 'success');
+                }, 2000);
+            }
+
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
